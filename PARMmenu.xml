@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menuDocument>
+    <menu>
+
+        <addScriptItem id="h.pane.parms.edit_parms">
+            <label>Edit...</label>
+            <parent>root_menu</parent>
+            <insertBefore/>
+            <context>
+                <expression>
+                    <![CDATA[
+if len(kwargs['parms']) > 1:
+    return False
+
+parm = kwargs['parms'][0]
+template = parm.parmTemplate()
+return template.type() in (hou.parmTemplateType.Int, hou.parmTemplateType.Float)
+                    ]]>
+                </expression>
+            </context>
+            <scriptCode>
+                <![CDATA[
+from edit_parms import EditParmsWindow
+
+parm = kwargs['parms'][0]
+EditParmsWindow(parm).show()
+                ]]>
+            </scriptCode>
+        </addScriptItem>
+
+    </menu>
+</menuDocument>
