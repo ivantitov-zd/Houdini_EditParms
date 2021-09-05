@@ -1,10 +1,12 @@
+from __future__ import division, print_function
+
 import re
 
-from PySide2.QtCore import Qt, QRegExp, Signal
-from PySide2.QtGui import QRegExpValidator
-from PySide2.QtWidgets import QDialog, QWidget, QTabWidget
+from PySide2.QtCore import Qt, QRegExp, Signal, QAbstractListModel
+from PySide2.QtGui import QRegExpValidator, QKeySequence
+from PySide2.QtWidgets import QDialog, QWidget, QTabWidget, QAction
 from PySide2.QtWidgets import QGridLayout, QHBoxLayout, QVBoxLayout, QSizePolicy, QSpacerItem
-from PySide2.QtWidgets import QLineEdit, QPushButton, QLabel
+from PySide2.QtWidgets import QLineEdit, QPushButton, QLabel, QListView
 
 import hou
 
@@ -85,6 +87,15 @@ class ExprParmWidget(QWidget):
         self.deleteLater()
 
 
+def markErrorInExpr(expr, exception):
+    offset = exception.offset - 1
+    return '{}[{}]{}'.format(
+        expr[:max(offset, 0)],
+        expr[offset] if 0 <= offset < len(expr) else '',
+        expr[offset + 1:]
+    )
+
+
 class ExprWidget(QWidget):
     needPreview = Signal()
 
@@ -149,10 +160,17 @@ class ExprWidget(QWidget):
         """Evaluates the expression for the given value."""
         var_values = {name: parm.value for name, parm in self._variables.items()}
         var_values['v'] = value
+        expr = self.expr
         try:
-            value = eval(self.expr, {}, var_values)
-        except Exception as e:
-            hou.ui.setStatusMessage(str(e), hou.severityType.Error)
+            value = eval(expr, {}, var_values)
+        except (NameError, AttributeError, ZeroDivisionError) as e:
+            hou.ui.setStatusMessage(str(e).replace('name', 'variable'), hou.severityType.Error)
+            return
+        except SyntaxError as e:
+            hou.ui.setStatusMessage(markErrorInExpr(self.expr, e), hou.severityType.Error)
+            return
+        except Exception:
+            hou.ui.setStatusMessage('bad expression', hou.severityType.Error)
             return
 
         try:
@@ -163,6 +181,32 @@ class ExprWidget(QWidget):
             hou.ui.setStatusMessage('')
 
         return value
+
+
+class ParmListModel(QAbstractListModel):
+    def __init__(self, parent=None):
+        super(ParmListModel, self).__init__(parent)
+
+        self._parms = ()
+
+    def setParmList(self, parms):
+        self.beginResetModel()
+        self._parms = tuple(parms)
+        self.endResetModel()
+
+    def rowCount(self, parent=None):
+        return len(self._parms)
+
+    def data(self, index, role=None):
+        if not index.isValid():
+            return
+
+        parm = self._parms[index.row()]
+
+        if role == Qt.DisplayRole:
+            return parm.path()
+        elif role == Qt.UserRole:
+            return parm
 
 
 class ParmsWidget(QWidget):
@@ -179,19 +223,28 @@ class ParmsWidget(QWidget):
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(4)
 
-        self._add_nodes_button = QPushButton()
-        self._add_nodes_button.setFixedWidth(self._add_nodes_button.sizeHint().height())
-        self._add_nodes_button.setIcon(hou.qt.Icon('BUTTONS_list_add', 16, 16))
-        self._add_nodes_button.setToolTip('Add selected nodes.')
-        # self._add_nodes_button.clicked.connect(self.createParms)
-        layout.addWidget(self._add_nodes_button, 0, 0)
+        self._unbind_button = QPushButton()
+        self._unbind_button.setFixedWidth(self._unbind_button.sizeHint().height())
+        self._unbind_button.setIcon(hou.qt.Icon('BUTTONS_list_delete', 16, 16))
+        self._unbind_button.setToolTip('Unbind selected parameters.')
+        self._unbind_button.clicked.connect(self.removeSelected)
+        layout.addWidget(self._unbind_button, 0, 0)
 
-        self._add_parms_button = QPushButton()
-        self._add_parms_button.setFixedWidth(self._add_parms_button.sizeHint().height())
-        self._add_parms_button.setIcon(hou.qt.Icon('BUTTONS_list_add', 16, 16))
-        self._add_parms_button.setToolTip('Choose and add parameters.')
-        # self._add_parms_button.clicked.connect(self.createParms)
-        layout.addWidget(self._add_parms_button, 0, 1)
+        self._set_as_source_button = QPushButton()
+        self._set_as_source_button.setFixedWidth(self._set_as_source_button.sizeHint().height())
+        self._set_as_source_button.setIcon(hou.qt.Icon('BUTTONS_link', 16, 16))
+        self._set_as_source_button.setToolTip('Set current.')
+        self._set_as_source_button.clicked.connect(self.setCurrentAsSource)
+        layout.addWidget(self._set_as_source_button, 0, 1)
+
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Ignored)
+        layout.addItem(spacer, 0, 2, 1, -1)
+
+        self._view = QListView()
+        layout.addWidget(self._view, 1, 0, 1, -1)
+
+        self._model = ParmListModel(self)
+        self._view.setModel(self._model)
 
         spacer = QSpacerItem(0, 0, QSizePolicy.Ignored, QSizePolicy.Expanding)
         layout.addItem(spacer, 1, 0, 1, -1)
@@ -206,6 +259,27 @@ class ParmsWidget(QWidget):
 
     def sourceParm(self):
         return self._source_parm
+
+    def setCurrentAsSource(self):
+        index = self._view.currentIndex()
+        if not index.isValid():
+            return
+
+        self.setSourceParm(index.data(Qt.UserRole))
+
+    def _updateParmList(self):
+        self._model.setParmList(self._parms.keys())
+
+    def removeSelected(self):
+        """Unbind selected parameters."""
+        with hou.undos.disabler():
+            for index in self._view.selectedIndexes():
+                parm = index.data(Qt.UserRole)
+                parm_data = self._parms[parm]
+                parm.set(parm_data['initial'])
+                self._parms.pop(parm, None)
+        self._updateParmList()
+        self.needPreview.emit()
 
     def addParms(self, parms):
         """
@@ -228,6 +302,7 @@ class ParmsWidget(QWidget):
             self._parms[parm] = {
                 'initial': parm.eval(),
             }
+        self._updateParmList()
         self.needPreview.emit()
 
     def parms(self):
@@ -259,7 +334,7 @@ class EditParmsWindow(QDialog):
         self._parm_list.sourceParmChanged.connect(self.updateWindowTitle)
         self._parm_list.setSourceParm(source_parm)
         self._parm_list.addParms([source_parm])
-        # self._tabs.addTab(self._parm_list, hou.qt.Icon('NETVIEW_image_link_located', 16, 16), 'Parameters')
+        self._tabs.addTab(self._parm_list, hou.qt.Icon('NETVIEW_image_link_located', 16, 16), 'Parameters')
 
         self._cancel_button = QPushButton('Cancel')
         self._cancel_button.clicked.connect(self.cancel)
@@ -271,6 +346,12 @@ class EditParmsWindow(QDialog):
 
         self._expr.needPreview.connect(self.preview)
         self._parm_list.needPreview.connect(self.preview)
+
+        self._remove_library_action = QAction('Remove', self)
+        self._remove_library_action.triggered.connect(self._parm_list.removeSelected)
+        self._remove_library_action.setShortcut(QKeySequence.Delete)
+        self._remove_library_action.setShortcutContext(Qt.WidgetWithChildrenShortcut)
+        self._parm_list.addAction(self._remove_library_action)
 
     def preview(self):
         """

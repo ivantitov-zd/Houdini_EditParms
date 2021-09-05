@@ -46,7 +46,9 @@ class FloatSlider(QSlider):
         elif event.button() == Qt.LeftButton:
             event = QMouseEvent(QEvent.MouseButtonPress, event.pos(),
                                 Qt.MiddleButton, Qt.MiddleButton, Qt.NoModifier)
-        super(FloatSlider, self).mousePressEvent(event)
+            super(FloatSlider, self).mousePressEvent(event)
+        else:
+            super(FloatSlider, self).mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
         if self._value_ladder_active:
