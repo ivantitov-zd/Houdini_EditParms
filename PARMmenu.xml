@@ -20,10 +20,9 @@ return template.type() in (hou.parmTemplateType.Int, hou.parmTemplateType.Float)
             </context>
             <scriptCode>
                 <![CDATA[
-from edit_parms import EditParmsWindow
+from edit_parms import MainWindow
 
-parm = kwargs['parms'][0]
-EditParmsWindow(parm).show()
+MainWindow(kwargs['parms'], hou.qt.mainWindow()).show()
                 ]]>
             </scriptCode>
         </addScriptItem>

@@ -1,1 +1,1 @@
-from .main import EditParmsWindow
+from .main_window import MainWindow
