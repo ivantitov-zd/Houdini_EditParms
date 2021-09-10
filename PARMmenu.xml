@@ -9,9 +9,6 @@
             <context>
                 <expression>
                     <![CDATA[
-if len(kwargs['parms']) > 1:
-    return False
-
 parm = kwargs['parms'][0]
 template = parm.parmTemplate()
 return template.type() in (hou.parmTemplateType.Int, hou.parmTemplateType.Float)
