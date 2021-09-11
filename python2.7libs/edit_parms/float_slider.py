@@ -1,8 +1,7 @@
-from PySide2.QtWidgets import QSlider
-from PySide2.QtGui import QMouseEvent
-from PySide2.QtCore import Qt, QEvent
-
 import hou
+from PySide2.QtCore import Qt, QEvent
+from PySide2.QtGui import QMouseEvent
+from PySide2.QtWidgets import QSlider
 
 
 class FloatSlider(QSlider):
@@ -12,7 +11,7 @@ class FloatSlider(QSlider):
         super(FloatSlider, self).__init__(orientation, parent)
         self.setRange(minimum, maximum)
         self._default_value = default * self._float_factor
-        self.setValue(self._default_value)
+        self.setValue(default)
         self._value_ladder_active = False
 
     def revertToDefault(self):
@@ -22,10 +21,16 @@ class FloatSlider(QSlider):
         self._default_value = value * self._float_factor
 
     def setMinimum(self, value):
-        return super(FloatSlider, self).setMinimum(value / self._float_factor)
+        return super(FloatSlider, self).setMinimum(value * self._float_factor)
+
+    def minimum(self):
+        return super(FloatSlider, self).minimum() / self._float_factor
 
     def setMaximum(self, value):
         return super(FloatSlider, self).setMaximum(value * self._float_factor)
+
+    def maximum(self):
+        return super(FloatSlider, self).maximum() / self._float_factor
 
     def setRange(self, minimum, maximum):
         return super(FloatSlider, self).setRange(minimum * self._float_factor, maximum * self._float_factor)

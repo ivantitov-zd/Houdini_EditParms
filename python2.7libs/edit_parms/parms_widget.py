@@ -1,8 +1,7 @@
+import hou
 from PySide2.QtCore import Signal, Qt
 from PySide2.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem
 from PySide2.QtWidgets import QWidget, QPushButton, QListView
-
-import hou
 
 from .parm_list_model import ParmListModel
 
@@ -22,6 +21,7 @@ class ParmsWidget(QWidget):
         layout.setSpacing(4)
 
         self._unbind_button = QPushButton()
+        self._unbind_button.setFocusPolicy(Qt.NoFocus)
         self._unbind_button.setFixedWidth(self._unbind_button.sizeHint().height())
         self._unbind_button.setIcon(hou.qt.Icon('BUTTONS_list_delete', 16, 16))
         self._unbind_button.setToolTip('Unbind selected parameters.\tDelete')
@@ -29,6 +29,7 @@ class ParmsWidget(QWidget):
         layout.addWidget(self._unbind_button, 0, 0)
 
         self._set_as_source_button = QPushButton()
+        self._set_as_source_button.setFocusPolicy(Qt.NoFocus)
         self._set_as_source_button.setFixedWidth(self._set_as_source_button.sizeHint().height())
         self._set_as_source_button.setIcon(hou.qt.Icon('BUTTONS_link', 16, 16))
         self._set_as_source_button.setToolTip('Set as current.')
@@ -39,6 +40,7 @@ class ParmsWidget(QWidget):
         layout.addItem(spacer, 0, 2, 1, -1)
 
         self._view = QListView()
+        self._view.setFocusPolicy(Qt.ClickFocus)
         self._view.setSelectionMode(QListView.ExtendedSelection)
         layout.addWidget(self._view, 1, 0, 1, -1)
 

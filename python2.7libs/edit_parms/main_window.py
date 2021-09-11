@@ -1,5 +1,4 @@
-from __future__ import division, print_function
-
+import hou
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QKeySequence
 from PySide2.QtWidgets import QDialog, QAction
@@ -8,8 +7,6 @@ from PySide2.QtWidgets import QTabWidget, QPushButton
 
 from .expr_widget import ExprWidget
 from .parms_widget import ParmsWidget
-
-import hou
 
 HOUDINI_PARM_PATH_MIME_FORMAT = 'application/sidefx-houdini-parm.path'
 HOUDINI_NODE_PATH_MIME_FORMAT = 'application/sidefx-houdini-node.path'
@@ -30,6 +27,7 @@ class MainWindow(QDialog):
         layout.setSpacing(4)
 
         self._tabs = QTabWidget()
+        self._tabs.setFocusPolicy(Qt.NoFocus)
         layout.addWidget(self._tabs, 0, 0, 1, -1)
 
         self._expr = ExprWidget()
@@ -37,22 +35,26 @@ class MainWindow(QDialog):
 
         self._parm_list = ParmsWidget()
         self._parm_list.sourceParmChanged.connect(self.updateWindowTitle)
-        if parms:
-            self._parm_list.setSourceParm(parms[0])
-            self._parm_list.addParms(parms)
         self._tabs.addTab(self._parm_list, hou.qt.Icon('NETVIEW_image_link_located', 16, 16), 'Parameters')
 
         self._cancel_button = QPushButton('Cancel')
+        self._cancel_button.setFocusPolicy(Qt.NoFocus)
         self._cancel_button.clicked.connect(self.reject)
         layout.addWidget(self._cancel_button, 1, 0)
 
         self._apply_button = QPushButton('Apply')
+        self._apply_button.setFocusPolicy(Qt.NoFocus)
         self._apply_button.setDefault(True)
         self._apply_button.clicked.connect(self.accept)
         layout.addWidget(self._apply_button, 1, 1)
 
         self._expr.needPreview.connect(self.preview)
         self._parm_list.needPreview.connect(self.preview)
+
+        if parms:
+            self._expr.loadFromHistory(parms[0].name())
+            self._parm_list.setSourceParm(parms[0])
+            self._parm_list.addParms(parms)
 
         self._remove_library_action = QAction('Remove', self)
         self._remove_library_action.triggered.connect(self._parm_list.removeSelected)
@@ -91,7 +93,6 @@ class MainWindow(QDialog):
             for parm, data in self._parm_list.parms().items():
                 new_value = self._expr.eval(data['initial'])
                 parm.set(new_value)
-        self.close()
 
     def dragEnterEvent(self, event):
         mime_data = event.mimeData()
@@ -128,12 +129,16 @@ class MainWindow(QDialog):
             self.setWindowTitle('Current parameter [{}]'.format(parm.name()))
 
     def showEvent(self, event):
+        self._expr.createParms()
         self._expr.selectExpression()
         super(MainWindow, self).showEvent(event)
 
     def hideEvent(self, event):
         if self.result() == QDialog.Accepted:
             self.apply()
+            parm_names = set(parm.name() for parm in self._parm_list.parms())
+            for name in parm_names:
+                self._expr.saveToHistory(name)
         else:
             self.cancel()
         super(MainWindow, self).hideEvent(event)

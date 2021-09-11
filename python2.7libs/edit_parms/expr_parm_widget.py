@@ -1,8 +1,8 @@
-from PySide2.QtCore import Signal
+import hou
+from PySide2.QtCore import Qt, Signal
+from PySide2.QtGui import QDoubleValidator
 from PySide2.QtWidgets import QHBoxLayout, QSizePolicy
 from PySide2.QtWidgets import QWidget, QPushButton, QLabel
-
-import hou
 
 from .float_slider import FloatSlider
 
@@ -11,7 +11,7 @@ class ExprParmWidget(QWidget):
     removed = Signal(str)
     valueChanged = Signal()
 
-    def __init__(self, name):
+    def __init__(self, name, value):
         super(ExprParmWidget, self).__init__()
         self._name = name
 
@@ -20,6 +20,7 @@ class ExprParmWidget(QWidget):
         layout.setSpacing(4)
 
         self._remove_button = QPushButton()
+        self._remove_button.setFocusPolicy(Qt.NoFocus)
         self._remove_button.setFixedWidth(self._remove_button.sizeHint().height())
         self._remove_button.setIcon(hou.qt.Icon('BUTTONS_multi_remove', 16, 16))
         self._remove_button.setToolTip('Remove parameter.')
@@ -34,11 +35,16 @@ class ExprParmWidget(QWidget):
         layout.addWidget(self._name_label)
 
         self._value_field = hou.qt.InputField(hou.qt.InputField.FloatType, 1)
+        self._value_field.setValue(value)
         self._value_field.setMinimumWidth(80)
+        line_edit = self._value_field.lineEdits[0]
+        line_edit.setValidator(QDoubleValidator())
         layout.addWidget(self._value_field)
 
-        self._slider = FloatSlider()
+        self._slider = FloatSlider(default=value)
+        self._slider.setFocusPolicy(Qt.ClickFocus)
         self._slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Ignored)
+        self._slider.setSingleStep(0.25)
         layout.addWidget(self._slider)
 
         self._value_field.valueChanged.connect(self._setSliderValue)
@@ -72,3 +78,8 @@ class ExprParmWidget(QWidget):
         """Removes item and emits signal with the variable name."""
         self.removed.emit(self.name)
         self.deleteLater()
+
+    def wheelEvent(self, event):
+        sign = 1 if event.angleDelta().y() > 0 else -1
+        step = 1 if event.modifiers() & Qt.ControlModifier else 0.25
+        self._value_field.setValue(self.value + sign * step)
