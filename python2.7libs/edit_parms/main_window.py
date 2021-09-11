@@ -93,7 +93,6 @@ class MainWindow(QDialog):
             for parm, data in self._parm_list.parms().items():
                 new_value = self._expr.eval(data['initial'])
                 parm.set(new_value)
-        self.close()
 
     def dragEnterEvent(self, event):
         mime_data = event.mimeData()
