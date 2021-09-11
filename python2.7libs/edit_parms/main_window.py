@@ -130,6 +130,7 @@ class MainWindow(QDialog):
             self.setWindowTitle('Current parameter [{}]'.format(parm.name()))
 
     def showEvent(self, event):
+        self._expr.createParms()
         self._expr.selectExpression()
         super(MainWindow, self).showEvent(event)
 
