@@ -11,7 +11,7 @@ class ExprParmWidget(QWidget):
     removed = Signal(str)
     valueChanged = Signal()
 
-    def __init__(self, name):
+    def __init__(self, name, value):
         super(ExprParmWidget, self).__init__()
         self._name = name
 
@@ -35,13 +35,13 @@ class ExprParmWidget(QWidget):
         layout.addWidget(self._name_label)
 
         self._value_field = hou.qt.InputField(hou.qt.InputField.FloatType, 1)
-        self._value_field.setValue(1)
+        self._value_field.setValue(value)
         self._value_field.setMinimumWidth(80)
         line_edit = self._value_field.lineEdits[0]
         line_edit.setValidator(QDoubleValidator())
         layout.addWidget(self._value_field)
 
-        self._slider = FloatSlider(default=1)
+        self._slider = FloatSlider(default=value)
         self._slider.setFocusPolicy(Qt.ClickFocus)
         self._slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Ignored)
         self._slider.setSingleStep(0.25)

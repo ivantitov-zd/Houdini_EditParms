@@ -8,6 +8,7 @@ from PySide2.QtWidgets import QWidget, QLineEdit, QPushButton
 
 from . import utils
 from .expr_parm_widget import ExprParmWidget
+from .storage import Storage
 
 DEFAULT_EXPR = 'v * k'
 EXPR_PATTERN = r'[()\.\w\/\*\-\+_% ]*'
@@ -20,7 +21,7 @@ class ExprWidget(QWidget):
     def __init__(self):
         super(ExprWidget, self).__init__()
 
-        self._variables = {}
+        self._var_parms = {}
 
         main_layout = QGridLayout(self)
         main_layout.setContentsMargins(4, 4, 4, 4)
@@ -64,28 +65,40 @@ class ExprWidget(QWidget):
 
     def _removeVariable(self, name):
         """Removes the variable by name. Used on parm widget destruction."""
-        self._variables.pop(name, None)
+        self._var_parms.pop(name, None)
         self.needPreview.emit()
 
-    def createParms(self):
+    def _createVarParm(self, name, value):
+        parm = ExprParmWidget(name, value)
+        parm.removed.connect(self._removeVariable)
+        parm.valueChanged.connect(self.needPreview)
+        return parm
+
+    def createParms(self, values=None):
         """Creates parameters for the expression variables, skipping existing."""
+        if values is None:
+            values = {}
+
         for match in re.finditer(EXPR_VAR_PATTERN, self.expr):
             var_name = match.group()
             if var_name == 'v':
                 continue
 
-            if var_name in self._variables:
+            if var_name in self._var_parms:
                 continue
 
-            parm = ExprParmWidget(var_name)
-            parm.removed.connect(self._removeVariable)
-            parm.valueChanged.connect(self.needPreview)
-            self._variables[var_name] = parm
+            parm = self._createVarParm(var_name, values.get(var_name, 1))
+            self._var_parms[var_name] = parm
             self._parms_layout.addWidget(parm)
+
+    def removeAllParms(self):
+        for var_name, parm in self._var_parms.items():
+            self._removeVariable(var_name)
+            parm.deleteLater()
 
     def eval(self, value):
         """Evaluates the expression for the given value."""
-        var_values = {name: parm.value for name, parm in self._variables.items()}
+        var_values = {name: parm.value for name, parm in self._var_parms.items()}
         var_values['v'] = value
         try:
             value = eval(self.expr, {}, var_values)
@@ -107,3 +120,27 @@ class ExprWidget(QWidget):
             hou.ui.setStatusMessage('')
 
         return value
+
+    def saveToHistory(self, parm_name):
+        """Saves current expression and variable values to the storage."""
+        data = {
+            'expression': self.expr,
+            'variables': {name: parm.value for name, parm in self._var_parms.items()}
+        }
+        storage = Storage()
+        storage.addToHistory(parm_name, data)
+
+    def loadFromHistory(self, parm_name):
+        """Loads expression and variable values from the storage."""
+        storage = Storage()
+        data = storage.setupFromHistory(parm_name)
+        if data is None:
+            return
+
+        expression = data.get('expression')
+        if not expression:
+            return
+        self._expr_field.setText(expression)
+
+        self.removeAllParms()
+        self.createParms(data.get('variables', {}))

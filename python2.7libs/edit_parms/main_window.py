@@ -33,6 +33,8 @@ class MainWindow(QDialog):
         layout.addWidget(self._tabs, 0, 0, 1, -1)
 
         self._expr = ExprWidget()
+        if parms:
+            self._expr.loadFromHistory(parms[0].name())
         self._tabs.addTab(self._expr, hou.qt.Icon('DATATYPES_code_function', 16, 16), 'Expression')
 
         self._parm_list = ParmsWidget()
@@ -137,6 +139,9 @@ class MainWindow(QDialog):
     def hideEvent(self, event):
         if self.result() == QDialog.Accepted:
             self.apply()
+            parm_names = set(parm.name() for parm in self._parm_list.parms())
+            for name in parm_names:
+                self._expr.saveToHistory(name)
         else:
             self.cancel()
         super(MainWindow, self).hideEvent(event)
