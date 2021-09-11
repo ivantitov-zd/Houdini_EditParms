@@ -31,15 +31,10 @@ class MainWindow(QDialog):
         layout.addWidget(self._tabs, 0, 0, 1, -1)
 
         self._expr = ExprWidget()
-        if parms:
-            self._expr.loadFromHistory(parms[0].name())
         self._tabs.addTab(self._expr, hou.qt.Icon('DATATYPES_code_function', 16, 16), 'Expression')
 
         self._parm_list = ParmsWidget()
         self._parm_list.sourceParmChanged.connect(self.updateWindowTitle)
-        if parms:
-            self._parm_list.setSourceParm(parms[0])
-            self._parm_list.addParms(parms)
         self._tabs.addTab(self._parm_list, hou.qt.Icon('NETVIEW_image_link_located', 16, 16), 'Parameters')
 
         self._cancel_button = QPushButton('Cancel')
@@ -55,6 +50,11 @@ class MainWindow(QDialog):
 
         self._expr.needPreview.connect(self.preview)
         self._parm_list.needPreview.connect(self.preview)
+
+        if parms:
+            self._expr.loadFromHistory(parms[0].name())
+            self._parm_list.setSourceParm(parms[0])
+            self._parm_list.addParms(parms)
 
         self._remove_library_action = QAction('Remove', self)
         self._remove_library_action.triggered.connect(self._parm_list.removeSelected)

@@ -6,7 +6,7 @@ import hou
 from PySide2.QtCore import Qt, Signal, QRegExp
 from PySide2.QtGui import QRegExpValidator
 from PySide2.QtWidgets import QGridLayout, QVBoxLayout, QSizePolicy, QSpacerItem
-from PySide2.QtWidgets import QWidget, QLineEdit, QPushButton
+from PySide2.QtWidgets import QWidget, QComboBox, QPushButton
 
 from . import utils
 from .expr_parm_widget import ExprParmWidget
@@ -15,6 +15,8 @@ from .storage import Storage
 DEFAULT_EXPR = 'v * k'
 EXPR_PATTERN = r'[()\.\w\/\*\-\+_% ]*'
 EXPR_VAR_PATTERN = r'[a-zA-Z_]\w*'
+
+storage = Storage()
 
 
 class ExprWidget(QWidget):
@@ -29,11 +31,16 @@ class ExprWidget(QWidget):
         main_layout.setContentsMargins(4, 4, 4, 4)
         main_layout.setSpacing(4)
 
-        self._expr_field = QLineEdit()
+        self._expr_field = QComboBox()
         expr_validator = QRegExpValidator(QRegExp(EXPR_PATTERN))
         self._expr_field.setValidator(expr_validator)
-        self._expr_field.setText(DEFAULT_EXPR)
-        self._expr_field.textChanged.connect(self.needPreview)
+        self._expr_field.setEditable(True)
+        line_edit = self._expr_field.lineEdit()
+        line_edit.setStyleSheet(hou.qt.styleSheet())
+        for preset in storage.presets:
+            self._expr_field.addItem(preset)
+        self._expr_field.setCurrentText(DEFAULT_EXPR)
+        self._expr_field.currentTextChanged.connect(self.needPreview)
         main_layout.addWidget(self._expr_field, 0, 0)
 
         self._create_parms_button = QPushButton()
@@ -41,8 +48,16 @@ class ExprWidget(QWidget):
         self._create_parms_button.setFixedWidth(self._create_parms_button.sizeHint().height())
         self._create_parms_button.setIcon(hou.qt.Icon('BUTTONS_create_parm_from_ch', 16, 16))
         self._create_parms_button.setToolTip('Create parameters for the expression variables.')
-        self._create_parms_button.clicked.connect(self.createParms)
+        self._create_parms_button.clicked.connect(lambda: self.createParms())
         main_layout.addWidget(self._create_parms_button, 0, 1)
+
+        self._save_preset_button = QPushButton()
+        self._save_preset_button.setFocusPolicy(Qt.NoFocus)
+        self._save_preset_button.setFixedWidth(self._save_preset_button.sizeHint().height())
+        self._save_preset_button.setIcon(hou.qt.Icon('BUTTONS_favorites', 16, 16))
+        self._save_preset_button.setToolTip('Add/Remove current expression to/from the presets.')
+        self._save_preset_button.clicked.connect(self._toggleHistory)
+        main_layout.addWidget(self._save_preset_button, 0, 2)
 
         self._parms_layout = QVBoxLayout()
         self._parms_layout.setContentsMargins(0, 0, 0, 0)
@@ -56,14 +71,14 @@ class ExprWidget(QWidget):
         self._expr_field.setFocus()
         v_match = re.match(r'^v\b|\bv$', self.expr)
         if v_match:
-            self._expr_field.setSelection(v_match.start() == 0, len(self.expr) - 1)
+            self._expr_field.lineEdit().setSelection(v_match.start() == 0, len(self.expr) - 1)
         else:
-            self._expr_field.selectAll()
+            self._expr_field.lineEdit().selectAll()
 
     @property
     def expr(self):
         """Returns expression."""
-        return self._expr_field.text()
+        return self._expr_field.currentText()
 
     def _removeVariable(self, name):
         """Removes the variable by name. Used on parm widget destruction."""
@@ -124,17 +139,15 @@ class ExprWidget(QWidget):
         return value
 
     def saveToHistory(self, parm_name):
-        """Saves current expression and variable values to the storage."""
+        """Saves current expression and variable values to the history."""
         data = {
             'expression': self.expr,
             'variables': {name: parm.value for name, parm in self._var_parms.items()}
         }
-        storage = Storage()
         storage.addToHistory(parm_name, data)
 
     def loadFromHistory(self, parm_name):
-        """Loads expression and variable values from the storage."""
-        storage = Storage()
+        """Loads expression and variable values from the history."""
         data = storage.setupFromHistory(parm_name)
         if data is None:
             return
@@ -142,7 +155,15 @@ class ExprWidget(QWidget):
         expression = data.get('expression')
         if not expression:
             return
-        self._expr_field.setText(expression)
+        self._expr_field.setCurrentText(expression)
 
         self.removeAllParms()
         self.createParms(data.get('variables', {}))
+        self.needPreview.emit()
+
+    def _toggleHistory(self):
+        """Adds/Removes current expression to/from the presets."""
+        if self.expr in storage.presets:
+            storage.removePreset(self.expr)
+        else:
+            storage.addPreset(self.expr)
