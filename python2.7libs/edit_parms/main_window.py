@@ -1,5 +1,3 @@
-from __future__ import division, print_function
-
 import hou
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QKeySequence
