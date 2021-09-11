@@ -51,7 +51,11 @@ class ExprWidget(QWidget):
 
     def selectExpression(self):
         self._expr_field.setFocus()
-        self._expr_field.selectAll()
+        v_match = re.match(r'^v\b|\bv$', self.expr)
+        if v_match:
+            self._expr_field.setSelection(v_match.start() == 0, len(self.expr) - 1)
+        else:
+            self._expr_field.selectAll()
 
     @property
     def expr(self):
