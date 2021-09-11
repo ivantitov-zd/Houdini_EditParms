@@ -1,5 +1,6 @@
 from __future__ import division, print_function
 
+import hou
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QKeySequence
 from PySide2.QtWidgets import QDialog, QAction
@@ -8,8 +9,6 @@ from PySide2.QtWidgets import QTabWidget, QPushButton
 
 from .expr_widget import ExprWidget
 from .parms_widget import ParmsWidget
-
-import hou
 
 HOUDINI_PARM_PATH_MIME_FORMAT = 'application/sidefx-houdini-parm.path'
 HOUDINI_NODE_PATH_MIME_FORMAT = 'application/sidefx-houdini-node.path'

@@ -1,8 +1,7 @@
+import hou
 from PySide2.QtCore import Signal
 from PySide2.QtWidgets import QHBoxLayout, QSizePolicy
 from PySide2.QtWidgets import QWidget, QPushButton, QLabel
-
-import hou
 
 from .float_slider import FloatSlider
 

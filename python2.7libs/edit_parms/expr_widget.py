@@ -1,11 +1,10 @@
 import re
 
+import hou
 from PySide2.QtCore import Signal, QRegExp
 from PySide2.QtGui import QRegExpValidator
 from PySide2.QtWidgets import QGridLayout, QVBoxLayout, QSizePolicy, QSpacerItem
 from PySide2.QtWidgets import QWidget, QLineEdit, QPushButton
-
-import hou
 
 from . import utils
 from .expr_parm_widget import ExprParmWidget

@@ -1,7 +1,6 @@
+import hou
 from PySide2.QtCore import QAbstractListModel, Qt
 from PySide2.QtGui import QIcon, QPixmap
-
-import hou
 
 EMPTY_ICON = QIcon(QPixmap(16, 16))
 

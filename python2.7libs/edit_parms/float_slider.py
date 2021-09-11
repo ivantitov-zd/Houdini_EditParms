@@ -1,8 +1,7 @@
-from PySide2.QtWidgets import QSlider
-from PySide2.QtGui import QMouseEvent
-from PySide2.QtCore import Qt, QEvent
-
 import hou
+from PySide2.QtCore import Qt, QEvent
+from PySide2.QtGui import QMouseEvent
+from PySide2.QtWidgets import QSlider
 
 
 class FloatSlider(QSlider):

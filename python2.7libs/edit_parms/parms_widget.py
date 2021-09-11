@@ -1,8 +1,7 @@
+import hou
 from PySide2.QtCore import Signal, Qt
 from PySide2.QtWidgets import QGridLayout, QSizePolicy, QSpacerItem
 from PySide2.QtWidgets import QWidget, QPushButton, QListView
-
-import hou
 
 from .parm_list_model import ParmListModel
 
