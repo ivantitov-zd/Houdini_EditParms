@@ -12,7 +12,7 @@ from .expr_parm_widget import ExprParmWidget
 
 DEFAULT_EXPR = 'v * a + b'
 EXPR_PATTERN = r'[()\.\w\/\*\-\+_% ]*'
-EXPR_PARM_PATTERN = r'[a-zA-Z_]\w*'
+EXPR_VAR_PATTERN = r'[a-zA-Z_]\w*'
 
 
 class ExprWidget(QWidget):
@@ -69,7 +69,7 @@ class ExprWidget(QWidget):
 
     def createParms(self):
         """Creates parameters for the expression variables, skipping existing."""
-        for match in re.finditer(EXPR_PARM_PATTERN, self.expr):
+        for match in re.finditer(EXPR_VAR_PATTERN, self.expr):
             var_name = match.group()
             if var_name == 'v':
                 continue
