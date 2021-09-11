@@ -34,10 +34,11 @@ class ExprParmWidget(QWidget):
         layout.addWidget(self._name_label)
 
         self._value_field = hou.qt.InputField(hou.qt.InputField.FloatType, 1)
+        self._value_field.setValue(1)
         self._value_field.setMinimumWidth(80)
         layout.addWidget(self._value_field)
 
-        self._slider = FloatSlider()
+        self._slider = FloatSlider(default=1)
         self._slider.setFocusPolicy(Qt.ClickFocus)
         self._slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Ignored)
         layout.addWidget(self._slider)
