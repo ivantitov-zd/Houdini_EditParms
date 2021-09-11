@@ -9,7 +9,7 @@ from PySide2.QtWidgets import QWidget, QLineEdit, QPushButton
 from . import utils
 from .expr_parm_widget import ExprParmWidget
 
-DEFAULT_EXPR = 'v * a + b'
+DEFAULT_EXPR = 'v * k'
 EXPR_PATTERN = r'[()\.\w\/\*\-\+_% ]*'
 EXPR_VAR_PATTERN = r'[a-zA-Z_]\w*'
 
