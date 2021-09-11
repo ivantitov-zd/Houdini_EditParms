@@ -1,5 +1,6 @@
 import hou
 from PySide2.QtCore import Qt, Signal
+from PySide2.QtGui import QDoubleValidator
 from PySide2.QtWidgets import QHBoxLayout, QSizePolicy
 from PySide2.QtWidgets import QWidget, QPushButton, QLabel
 
@@ -36,11 +37,14 @@ class ExprParmWidget(QWidget):
         self._value_field = hou.qt.InputField(hou.qt.InputField.FloatType, 1)
         self._value_field.setValue(1)
         self._value_field.setMinimumWidth(80)
+        line_edit = self._value_field.lineEdits[0]
+        line_edit.setValidator(QDoubleValidator())
         layout.addWidget(self._value_field)
 
         self._slider = FloatSlider(default=1)
         self._slider.setFocusPolicy(Qt.ClickFocus)
         self._slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Ignored)
+        self._slider.setSingleStep(0.25)
         layout.addWidget(self._slider)
 
         self._value_field.valueChanged.connect(self._setSliderValue)
@@ -74,3 +78,8 @@ class ExprParmWidget(QWidget):
         """Removes item and emits signal with the variable name."""
         self.removed.emit(self.name)
         self.deleteLater()
+
+    def wheelEvent(self, event):
+        sign = 1 if event.angleDelta().y() > 0 else -1
+        step = 1 if event.modifiers() & Qt.ControlModifier else 0.25
+        self._value_field.setValue(self.value + sign * step)
