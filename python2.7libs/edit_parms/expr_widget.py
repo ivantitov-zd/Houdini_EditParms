@@ -1,7 +1,7 @@
 import re
 
 import hou
-from PySide2.QtCore import Signal, QRegExp
+from PySide2.QtCore import Qt, Signal, QRegExp
 from PySide2.QtGui import QRegExpValidator
 from PySide2.QtWidgets import QGridLayout, QVBoxLayout, QSizePolicy, QSpacerItem
 from PySide2.QtWidgets import QWidget, QLineEdit, QPushButton
@@ -34,6 +34,7 @@ class ExprWidget(QWidget):
         main_layout.addWidget(self._expr_field, 0, 0)
 
         self._create_parms_button = QPushButton()
+        self._create_parms_button.setFocusPolicy(Qt.NoFocus)
         self._create_parms_button.setFixedWidth(self._create_parms_button.sizeHint().height())
         self._create_parms_button.setIcon(hou.qt.Icon('BUTTONS_create_parm_from_ch', 16, 16))
         self._create_parms_button.setToolTip('Create parameters for the expression variables.')

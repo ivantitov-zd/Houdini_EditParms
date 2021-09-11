@@ -29,6 +29,7 @@ class MainWindow(QDialog):
         layout.setSpacing(4)
 
         self._tabs = QTabWidget()
+        self._tabs.setFocusPolicy(Qt.NoFocus)
         layout.addWidget(self._tabs, 0, 0, 1, -1)
 
         self._expr = ExprWidget()
@@ -42,10 +43,12 @@ class MainWindow(QDialog):
         self._tabs.addTab(self._parm_list, hou.qt.Icon('NETVIEW_image_link_located', 16, 16), 'Parameters')
 
         self._cancel_button = QPushButton('Cancel')
+        self._cancel_button.setFocusPolicy(Qt.NoFocus)
         self._cancel_button.clicked.connect(self.reject)
         layout.addWidget(self._cancel_button, 1, 0)
 
         self._apply_button = QPushButton('Apply')
+        self._apply_button.setFocusPolicy(Qt.NoFocus)
         self._apply_button.setDefault(True)
         self._apply_button.clicked.connect(self.accept)
         layout.addWidget(self._apply_button, 1, 1)

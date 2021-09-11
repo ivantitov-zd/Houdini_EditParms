@@ -1,5 +1,5 @@
 import hou
-from PySide2.QtCore import Signal
+from PySide2.QtCore import Qt, Signal
 from PySide2.QtWidgets import QHBoxLayout, QSizePolicy
 from PySide2.QtWidgets import QWidget, QPushButton, QLabel
 
@@ -19,6 +19,7 @@ class ExprParmWidget(QWidget):
         layout.setSpacing(4)
 
         self._remove_button = QPushButton()
+        self._remove_button.setFocusPolicy(Qt.NoFocus)
         self._remove_button.setFixedWidth(self._remove_button.sizeHint().height())
         self._remove_button.setIcon(hou.qt.Icon('BUTTONS_multi_remove', 16, 16))
         self._remove_button.setToolTip('Remove parameter.')
@@ -37,6 +38,7 @@ class ExprParmWidget(QWidget):
         layout.addWidget(self._value_field)
 
         self._slider = FloatSlider()
+        self._slider.setFocusPolicy(Qt.ClickFocus)
         self._slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Ignored)
         layout.addWidget(self._slider)
 
