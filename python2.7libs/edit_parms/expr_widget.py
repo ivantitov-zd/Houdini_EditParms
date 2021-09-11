@@ -87,9 +87,8 @@ class ExprWidget(QWidget):
         """Evaluates the expression for the given value."""
         var_values = {name: parm.value for name, parm in self._variables.items()}
         var_values['v'] = value
-        expr = self.expr
         try:
-            value = eval(expr, {}, var_values)
+            value = eval(self.expr, {}, var_values)
         except (NameError, AttributeError, ZeroDivisionError) as e:
             hou.ui.setStatusMessage(str(e).replace('name', 'variable'), hou.severityType.Error)
             return
